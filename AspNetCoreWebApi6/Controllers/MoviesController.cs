@@ -43,6 +43,34 @@ namespace AspNetCoreWebApi6.Controllers
 
             return movie;
         }
+        
+        // POST: api/AddMovieList
+        [HttpPost("AddMovieList")]
+        public async Task<IActionResult> AddMovieList(IEnumerable<Movie> movies)
+        {
+            if (movies == null || !movies.Any())
+            {
+                return BadRequest("The movie list is empty or null.");
+            }
+
+            if (_dbContext.Movies == null)
+            {
+                return NotFound("The Movies collection is not available.");
+            }
+
+            var existingMovieIds = _dbContext.Movies.Select(m => m.Id).ToHashSet();
+            var newMovies = movies.Where(m => !existingMovieIds.Contains(m.Id)).ToList();
+
+            if (!newMovies.Any())
+            {
+                return BadRequest("All movies in the list already exist.");
+            }
+
+            _dbContext.Movies.AddRange(newMovies);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok("Movies added successfully.");
+        }
 
         // POST: api/Movies
         [HttpPost]
